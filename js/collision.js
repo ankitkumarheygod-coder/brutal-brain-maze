@@ -19,12 +19,18 @@ export const Collision = {
         let distY = cy - ny;
         let dist = Math.sqrt(distX * distX + distY * distY);
 
-        if (dist < radius && dist > 0.001) {
+        // Calculate overlap and collision normal to allow Wall Sliding
+        if (dist < radius && dist > 0.0001) {
             let overlap = radius - dist;
+            let normX = distX / dist;
+            let normY = distY / dist;
+            
             return {
                 hit: true,
-                pushX: (distX / dist) * overlap,
-                pushY: (distY / dist) * overlap
+                pushX: normX * overlap,
+                pushY: normY * overlap,
+                nx: normX,     // Normal X
+                ny: normY      // Normal Y
             };
         }
         return { hit: false };
