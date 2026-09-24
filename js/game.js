@@ -48,17 +48,21 @@ export class GameEngine {
         window.addEventListener('keydown', (e) => this.handleKey(e, true));
         window.addEventListener('keyup', (e) => this.handleKey(e, false));
 
-        // Touch (Swipe / Drag)
+        // Touch (Dynamic Floating Joystick / Swipe)
         let isTouching = false;
         let tStartX = 0, tStartY = 0;
+        const MAX_JOYSTICK_RADIUS = 25; // Drags the touch origin with the finger
+        const DEADZONE = 3;
 
         this.canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Stop scroll
+            e.preventDefault(); 
             if (stateManager.is(GameState.PLAYING)) {
                 isTouching = true;
                 const touch = e.touches[0];
                 tStartX = touch.clientX;
                 tStartY = touch.clientY;
+                this.inputDir.x = 0; 
+                this.inputDir.y = 0;
             }
         }, {passive: false});
 
@@ -66,12 +70,31 @@ export class GameEngine {
             e.preventDefault();
             if (isTouching && stateManager.is(GameState.PLAYING)) {
                 const touch = e.touches[0];
-                let dx = touch.clientX - tStartX;
-                let dy = touch.clientY - tStartY;
-                let dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist > 5) {
+                let currentX = touch.clientX;
+                let currentY = touch.clientY;
+                
+                let dx = currentX - tStartX;
+                let dy = currentY - tStartY;
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                
+                // If finger moves far away, drag the center origin behind it.
+                // This means changing direction is always instantly responsive.
+                if (dist > MAX_JOYSTICK_RADIUS) {
+                    let angle = Math.atan2(dy, dx);
+                    tStartX = currentX - Math.cos(angle) * MAX_JOYSTICK_RADIUS;
+                    tStartY = currentY - Math.sin(angle) * MAX_JOYSTICK_RADIUS;
+                    
+                    dx = currentX - tStartX;
+                    dy = currentY - tStartY;
+                    dist = MAX_JOYSTICK_RADIUS;
+                }
+
+                if (dist > DEADZONE) {
                     this.inputDir.x = dx / dist;
                     this.inputDir.y = dy / dist;
+                } else {
+                    this.inputDir.x = 0;
+                    this.inputDir.y = 0;
                 }
             }
         }, {passive: false});
@@ -213,8 +236,9 @@ export class GameEngine {
         debug.classList.remove('hidden');
         debug.innerHTML = `
             STATE: ${Object.keys(GameState).find(k => GameState[k] === stateManager.current)}<br>
-            ACTIVE TIME: ${(this.quizTimer.activeTimeMs/1000).toFixed(1)} / ${this.quizTimer.thresholdMs/1000}s<br>
-            PLAYER X: ${Math.round(this.player?.x || 0)} Y: ${Math.round(this.player?.y || 0)}
+            TIME: ${(this.quizTimer.activeTimeMs/1000).toFixed(1)}s<br>
+            SPEED: ${Math.round(Math.sqrt(this.player.vx*this.player.vx + this.player.vy*this.player.vy))}<br>
+            INPUT DIR: X ${this.inputDir.x.toFixed(2)} Y ${this.inputDir.y.toFixed(2)}
         `;
     }
 }
