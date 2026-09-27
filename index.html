@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Arrow Puzzle - 30 Levels</title>
+<title>Arrow Puzzle - Unlimited Levels</title>
 <style>
   :root {
     --bg: #f5f7fa;
     --surface: #ffffff;
     --primary: #4f7cff;
+    --primary-dark: #3b6ae0;
     --primary-light: #e8efff;
     --text: #1e293b;
     --text-light: #64748b;
@@ -16,7 +17,8 @@
     --shadow: 0 4px 16px rgba(0,0,0,0.06);
     --success: #22c55e;
     --danger: #ef4444;
-    --hint: #fbbf24;
+    --warning: #fbbf24;
+    --gold: #f59e0b;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -30,6 +32,7 @@
     padding: 12px;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
   .app {
     width: 100%;
@@ -37,31 +40,49 @@
     background: var(--surface);
     border-radius: 24px;
     box-shadow: var(--shadow);
-    padding: 18px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
     position: relative;
   }
   .top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
   }
   .level-pill {
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary), #6b8eff);
     color: #fff;
-    padding: 6px 16px;
+    padding: 6px 14px;
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 700;
     letter-spacing: 0.3px;
+    white-space: nowrap;
   }
-  .moves-text {
-    font-size: 0.85rem;
+  .stats {
+    display: flex;
+    gap: 12px;
+    font-size: 0.75rem;
     color: var(--text-light);
     font-weight: 600;
   }
+  .stats span b { color: var(--text); font-size: 0.85rem; }
+  .difficulty-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .diff-easy { background: #d1fae5; color: #065f46; }
+  .diff-medium { background: #fef3c7; color: #92400e; }
+  .diff-hard { background: #fee2e2; color: #991b1b; }
+  .diff-expert { background: #ede9fe; color: #5b21b6; }
+
   .board-wrap {
     display: flex;
     justify-content: center;
@@ -82,7 +103,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     font-weight: 800;
     cursor: pointer;
     transition: transform 0.12s, background 0.15s, box-shadow 0.15s;
@@ -100,27 +121,17 @@
     color: #1e40af;
     box-shadow: 0 2px 6px rgba(59,130,246,0.15);
   }
-  .cell.arrow:active {
-    transform: scale(0.92);
-  }
-  .cell.hint {
-    animation: hintPulse 0.7s ease-in-out infinite alternate;
-  }
+  .cell.arrow:active { transform: scale(0.92); }
+  .cell.hint { animation: hintPulse 0.7s ease-in-out infinite alternate; }
   @keyframes hintPulse {
     from { box-shadow: 0 0 0 0 rgba(251,191,36,0.6); }
     to { box-shadow: 0 0 0 10px rgba(251,191,36,0); }
   }
-  .cell.shake {
-    animation: shake 0.3s;
-  }
+  .cell.shake { animation: shake 0.3s; }
   @keyframes shake {
     0%,100% { transform: translateX(0); }
     25% { transform: translateX(-5px); }
     75% { transform: translateX(5px); }
-  }
-  .cell.leaving {
-    transition: transform 0.35s ease-in, opacity 0.35s ease-in;
-    opacity: 0;
   }
   .status-msg {
     text-align: center;
@@ -131,15 +142,15 @@
   }
   .controls {
     display: flex;
-    gap: 8px;
+    gap: 6px;
   }
   button {
     flex: 1;
-    padding: 12px 8px;
+    padding: 11px 6px;
     border: none;
-    border-radius: 14px;
+    border-radius: 12px;
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 700;
     cursor: pointer;
     transition: background 0.15s, transform 0.1s;
@@ -149,10 +160,12 @@
   .btn-hint { background: #fef3c7; color: #92400e; }
   .btn-undo { background: #e0e7ff; color: #3730a3; }
   .btn-reset { background: #f1f5f9; color: #334155; }
+  .btn-skip { background: #fce7f3; color: #9f1239; }
+
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15,23,42,0.45);
+    background: rgba(15,23,42,0.5);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -161,14 +174,14 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(3px);
   }
   .modal-overlay.show { opacity: 1; pointer-events: auto; }
   .modal {
     background: #fff;
     border-radius: 22px;
     padding: 26px 22px;
-    max-width: 320px;
+    max-width: 340px;
     width: 100%;
     text-align: center;
     box-shadow: 0 24px 48px rgba(0,0,0,0.18);
@@ -177,29 +190,66 @@
   }
   .modal-overlay.show .modal { transform: scale(1); }
   .modal h2 { font-size: 1.3rem; margin-bottom: 6px; }
-  .modal p { color: var(--text-light); font-size: 0.9rem; margin-bottom: 18px; }
-  .modal .stars { font-size: 2rem; letter-spacing: 8px; margin-bottom: 10px; }
-  .modal button { width: 100%; padding: 14px; background: var(--primary); color: #fff; font-size: 0.95rem; }
-  .modal button:active { background: #3b6ae0; }
-  .welcome-modal .modal { max-width: 360px; }
+  .modal p { color: var(--text-light); font-size: 0.85rem; margin-bottom: 16px; line-height: 1.5; }
+  .modal .stars { font-size: 2rem; letter-spacing: 6px; margin-bottom: 8px; }
+  .modal .xp-gain {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .modal .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    border-bottom: 1px solid var(--border);
+  }
+  .modal .stat-row b { color: var(--text); }
+  .modal button {
+    width: 100%;
+    padding: 13px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.95rem;
+    margin-top: 14px;
+  }
+  .modal button:active { background: var(--primary-dark); }
+  .modal .btn-secondary {
+    background: #f1f5f9;
+    color: var(--text);
+    margin-top: 8px;
+  }
   .welcome-modal ul {
     text-align: left;
-    margin: 12px 0 20px;
+    margin: 12px 0 18px;
     padding-left: 20px;
     color: var(--text-light);
     font-size: 0.85rem;
     line-height: 1.7;
   }
   .welcome-modal li { margin-bottom: 4px; }
-  .hidden { display: none; }
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
 
 <div class="app">
   <div class="top-bar">
-    <div class="level-pill">Level <span id="levelNum">1</span>/30</div>
-    <div class="moves-text">Moves: <span id="moveCount">0</span></div>
+    <div class="level-pill">Level <span id="levelNum">1</span></div>
+    <span class="difficulty-badge diff-easy" id="diffBadge">Easy</span>
+    <div class="stats">
+      <span>⭐ <b id="totalStars">0</b></span>
+      <span>XP <b id="totalXp">0</b></span>
+    </div>
+  </div>
+
+  <div class="top-bar">
+    <div class="stats">
+      <span>Moves: <b id="moveCount">0</b></span>
+      <span>Best: <b id="bestMoves">-</b></span>
+    </div>
   </div>
 
   <div class="board-wrap">
@@ -212,6 +262,7 @@
     <button class="btn-hint" id="btnHint">💡 Hint</button>
     <button class="btn-undo" id="btnUndo">↶ Undo</button>
     <button class="btn-reset" id="btnReset">⟲ Reset</button>
+    <button class="btn-skip" id="btnSkip">⏭ Skip</button>
   </div>
 </div>
 
@@ -220,77 +271,110 @@
   <div class="modal">
     <div class="stars" id="modalStars">⭐⭐⭐</div>
     <h2 id="modalTitle">Level Complete!</h2>
-    <p id="modalText">Great job!</p>
+    <div class="xp-gain" id="modalXp">+100 XP</div>
+    <div id="modalStats"></div>
     <button id="btnNext">Next Level →</button>
+    <button class="btn-secondary" id="btnReplay">Replay This Level</button>
   </div>
 </div>
 
-<!-- Welcome / How to Play Modal -->
-<div class="modal-overlay welcome-modal show" id="welcomeOverlay">
-  <div class="modal">
+<!-- Welcome Modal -->
+<div class="modal-overlay show" id="welcomeOverlay">
+  <div class="modal welcome-modal">
     <h2>🏹 Arrow Puzzle</h2>
-    <p>हर arrow को बाहर निकालो!</p>
+    <p>असीमित लेवल, हर बार नया!</p>
     <ul>
       <li>Arrow पर टैप करो</li>
-      <li>अगर उसके रास्ते में कोई और arrow नहीं है, तो वह बाहर निकल जाएगा</li>
-      <li>अगर रास्ता बंद है, तो वह हिलेगा और "रास्ता बंद है!" दिखेगा</li>
+      <li>अगर रास्ता साफ़ है तो वह बाहर निकल जाएगा</li>
+      <li>अगर रास्ता बंद है, तो वह हिलेगा</li>
       <li>सही क्रम में arrows निकालकर सभी हटाओ</li>
-      <li>कम moves में पूरा करो — 3 stars पाने के लिए</li>
+      <li>कम moves में 3 stars पाओ</li>
+      <li>XP कमाओ और अपना रिकॉर्ड तोड़ो!</li>
     </ul>
     <button id="btnStart">Start Playing</button>
   </div>
 </div>
 
 <script>
+// ===== सेव डेटा =====
+const SAVE_KEY = 'arrowPuzzleUnlimitedSave';
+const defaultSave = {
+  level: 1,
+  totalStars: 0,
+  totalXp: 0,
+  bestMoves: {},        // level -> best moves
+  completed: [],
+  soundEnabled: true
+};
+
+function loadSave() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return { ...defaultSave };
+    return { ...defaultSave, ...JSON.parse(raw) };
+  } catch { return { ...defaultSave }; }
+}
+function writeSave(data) {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch {}
+}
+let SAVE = loadSave();
+
 // ===== गेम स्टेट =====
-let currentLevel = 1;
-const MAX_LEVEL = 30;
+let currentLevel = SAVE.level || 1;
 let boardSize = 4;
 let arrows = [];
 let moves = 0;
 let animating = false;
-let history = [];   // undo के लिए
+let history = [];
+let optimalMoves = 0;
 
 const boardEl = document.getElementById('board');
 const levelNumEl = document.getElementById('levelNum');
 const moveCountEl = document.getElementById('moveCount');
+const bestMovesEl = document.getElementById('bestMoves');
+const totalStarsEl = document.getElementById('totalStars');
+const totalXpEl = document.getElementById('totalXp');
 const statusMsg = document.getElementById('statusMsg');
+const diffBadge = document.getElementById('diffBadge');
 const modalOverlay = document.getElementById('modalOverlay');
 const modalTitle = document.getElementById('modalTitle');
-const modalText = document.getElementById('modalText');
 const modalStars = document.getElementById('modalStars');
+const modalXp = document.getElementById('modalXp');
+const modalStats = document.getElementById('modalStats');
 const btnNext = document.getElementById('btnNext');
+const btnReplay = document.getElementById('btnReplay');
 const welcomeOverlay = document.getElementById('welcomeOverlay');
 
-// ===== सीडेड रैंडम =====
-let seed = 12345;
-function srand(s) { seed = s; }
-function rand() {
-  seed = (seed * 9301 + 49297) % 233280;
-  return seed / 233280;
+// ===== रैंडम =====
+function rand() { return Math.random(); }
+
+// ===== डिफिकल्टी =====
+function getDifficulty(level) {
+  if (level <= 5) return { name: 'Easy', cls: 'diff-easy', min: 3, max: 5, size: 4 };
+  if (level <= 12) return { name: 'Medium', cls: 'diff-medium', min: 6, max: 9, size: 5 };
+  if (level <= 20) return { name: 'Hard', cls: 'diff-hard', min: 10, max: 14, size: 6 };
+  if (level <= 30) return { name: 'Hard+', cls: 'diff-hard', min: 15, max: 19, size: 7 };
+  if (level <= 50) return { name: 'Expert', cls: 'diff-expert', min: 20, max: 26, size: 8 };
+  if (level <= 80) return { name: 'Expert+', cls: 'diff-expert', min: 27, max: 34, size: 9 };
+  return { name: 'Master', cls: 'diff-expert', min: 35, max: 45, size: 10 };
 }
 
 // ===== लेवल जनरेटर (गारंटीड सॉल्वेबल) =====
 function generateLevel(levelNum) {
-  srand(levelNum * 98765 + 1234);
-  
-  let size, targetArrows;
-  if (levelNum <= 5) { size = 4; targetArrows = 3 + levelNum; }
-  else if (levelNum <= 10) { size = 5; targetArrows = 7 + (levelNum - 5); }
-  else if (levelNum <= 15) { size = 6; targetArrows = 11 + (levelNum - 10); }
-  else if (levelNum <= 20) { size = 7; targetArrows = 15 + (levelNum - 15); }
-  else if (levelNum <= 25) { size = 8; targetArrows = 20 + (levelNum - 20); }
-  else { size = 9; targetArrows = 26 + (levelNum - 25); }
-  
-  const maxArrows = Math.floor(size * size * 0.55);
-  targetArrows = Math.min(targetArrows, maxArrows);
+  const diff = getDifficulty(levelNum);
+  const size = diff.size;
+  const targetArrows = Math.min(
+    Math.floor(diff.min + rand() * (diff.max - diff.min + 1)),
+    Math.floor(size * size * 0.55)
+  );
   
   const grid = Array.from({ length: size }, () => Array(size).fill(null));
   const arrowsList = [];
   const dirs = ['up', 'down', 'left', 'right'];
   
+  // हर arrow के लिए random position और direction चुनें
   let attempts = 0;
-  const maxAttempts = 5000;
+  const maxAttempts = 3000;
   
   while (arrowsList.length < targetArrows && attempts < maxAttempts) {
     attempts++;
@@ -303,7 +387,7 @@ function generateLevel(levelNum) {
     let placed = false;
     
     for (const dir of shuffled) {
-      // चेक करें कि इस direction में रास्ता साफ़ है (पहले से रखे arrows से)
+      // चेक करें कि इस direction में रास्ता साफ़ है
       let clear = true;
       let rr = r, cc = c;
       const step = { up: [-1,0], down: [1,0], left: [0,-1], right: [0,1] }[dir];
@@ -315,7 +399,6 @@ function generateLevel(levelNum) {
       }
       if (!clear) continue;
       
-      // यह arrow रख सकते हैं
       const id = arrowsList.length + 1;
       grid[r][c] = { id, row: r, col: c, dir };
       arrowsList.push({ id, row: r, col: c, dir });
@@ -324,13 +407,17 @@ function generateLevel(levelNum) {
     }
   }
   
-  // अगर पर्याप्त arrows नहीं बने, तो कम से कम 2 तो होने ही चाहिए
+  // Fallback अगर बहुत कम arrows बने
   if (arrowsList.length < 2) {
-    // फॉलबैक: 2 arrows रखें जो एक-दूसरे को ब्लॉक न करें
-    const positions = [[0,0,'right'],[size-1,size-1,'down']];
     arrowsList.length = 0;
+    grid.forEach(row => row.fill(null));
+    const positions = [
+      [0, 0, 'right'],
+      [size - 1, size - 1, 'down']
+    ];
     positions.forEach((p, i) => {
-      arrowsList.push({ id: i+1, row: p[0], col: p[1], dir: p[2] });
+      arrowsList.push({ id: i + 1, row: p[0], col: p[1], dir: p[2] });
+      grid[p[0]][p[1]] = arrowsList[i];
     });
   }
   
@@ -340,15 +427,27 @@ function generateLevel(levelNum) {
 // ===== लेवल लोड =====
 function loadLevel(levelNum) {
   currentLevel = levelNum;
+  SAVE.level = levelNum;
+  writeSave(SAVE);
+  
   const level = generateLevel(levelNum);
   boardSize = level.size;
   arrows = level.arrows.map(a => ({ ...a }));
+  optimalMoves = level.arrows.length;
   moves = 0;
   animating = false;
   history = [];
   
   levelNumEl.textContent = levelNum;
   moveCountEl.textContent = moves;
+  bestMovesEl.textContent = SAVE.bestMoves[levelNum] || '-';
+  totalStarsEl.textContent = SAVE.totalStars;
+  totalXpEl.textContent = SAVE.totalXp;
+  
+  const diff = getDifficulty(levelNum);
+  diffBadge.textContent = diff.name;
+  diffBadge.className = 'difficulty-badge ' + diff.cls;
+  
   statusMsg.textContent = '';
   modalOverlay.classList.remove('show');
   
@@ -371,8 +470,6 @@ function renderBoard() {
       if (arrow) {
         cell.classList.add('arrow');
         cell.dataset.id = arrow.id;
-        cell.dataset.row = r;
-        cell.dataset.col = c;
         cell.textContent = { up:'↑', down:'↓', left:'←', right:'→' }[arrow.dir];
         cell.addEventListener('click', () => onArrowClick(arrow.id));
       } else {
@@ -417,7 +514,6 @@ function onArrowClick(id) {
   animating = true;
   statusMsg.textContent = '';
   
-  // Undo के लिए सेव
   history.push({
     arrows: arrows.map(a => ({ ...a })),
     moves
@@ -445,31 +541,54 @@ function onArrowClick(id) {
 
 // ===== लेवल कम्पलीट =====
 function levelComplete() {
-  const level = generateLevel(currentLevel);
-  const optimalMoves = level.arrows.length;
+  // Stars
   let stars = 1;
   if (moves <= optimalMoves) stars = 3;
   else if (moves <= optimalMoves + 2) stars = 2;
   
+  // XP
+  const baseXp = 50;
+  const starBonus = stars * 25;
+  const moveBonus = Math.max(0, (optimalMoves - moves) * 10);
+  const xpGained = baseXp + starBonus + moveBonus;
+  
+  // Save
+  if (!SAVE.completed.includes(currentLevel)) {
+    SAVE.completed.push(currentLevel);
+  }
+  const prevBest = SAVE.bestMoves[currentLevel];
+  const isNewBest = !prevBest || moves < prevBest;
+  if (isNewBest) {
+    SAVE.bestMoves[currentLevel] = moves;
+  }
+  SAVE.totalStars += stars;
+  SAVE.totalXp += xpGained;
+  writeSave(SAVE);
+  
+  // UI
   modalStars.textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
   modalTitle.textContent = 'Level Complete!';
-  modalText.textContent = `Moves: ${moves} / Optimal: ${optimalMoves}`;
+  modalXp.textContent = `+${xpGained} XP`;
   
-  if (currentLevel < MAX_LEVEL) {
-    btnNext.textContent = 'Next Level →';
-    btnNext.onclick = () => {
-      modalOverlay.classList.remove('show');
-      loadLevel(currentLevel + 1);
-    };
-  } else {
-    btnNext.textContent = 'Play Again 🔄';
-    btnNext.onclick = () => {
-      modalOverlay.classList.remove('show');
-      loadLevel(1);
-    };
-    modalTitle.textContent = 'All 30 Levels Complete! 🎉';
-    modalText.textContent = 'You are a puzzle master!';
+  let statsHtml = `
+    <div class="stat-row"><span>Moves</span><b>${moves}</b></div>
+    <div class="stat-row"><span>Optimal</span><b>${optimalMoves}</b></div>
+    <div class="stat-row"><span>Best</span><b>${SAVE.bestMoves[currentLevel]}</b></div>
+  `;
+  if (isNewBest) {
+    statsHtml += `<div class="stat-row"><span>🏆 New Best!</span><b>✓</b></div>`;
   }
+  modalStats.innerHTML = statsHtml;
+  
+  btnNext.textContent = 'Next Level →';
+  btnNext.onclick = () => {
+    modalOverlay.classList.remove('show');
+    loadLevel(currentLevel + 1);
+  };
+  btnReplay.onclick = () => {
+    modalOverlay.classList.remove('show');
+    loadLevel(currentLevel);
+  };
   
   modalOverlay.classList.add('show');
 }
@@ -505,15 +624,21 @@ document.getElementById('btnReset').addEventListener('click', () => {
   }
 });
 
+// ===== स्किप =====
+document.getElementById('btnSkip').addEventListener('click', () => {
+  if (confirm('इस level को छोड़कर अगले level पर जाएँ? (कोई stars/XP नहीं मिलेगा)')) {
+    loadLevel(currentLevel + 1);
+  }
+});
+
 // ===== शुरुआत =====
 document.getElementById('btnStart').addEventListener('click', () => {
   welcomeOverlay.classList.remove('show');
-  loadLevel(1);
+  loadLevel(currentLevel);
 });
 
-// गेम शुरू (welcome modal बंद होने के बाद loadLevel होगा)
-// अगर user ने पहले खेला है तो सीधे level 1
-loadLevel(1);
+// गेम शुरू
+loadLevel(currentLevel);
 </script>
 </body>
 </html>
