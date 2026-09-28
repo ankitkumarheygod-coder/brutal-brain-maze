@@ -3,14 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Arrow Puzzle - Unlimited Levels</title>
+<title>Arrow Puzzle - 30 Levels + Unlimited</title>
 <style>
   :root {
     --bg: #f5f7fa;
     --surface: #ffffff;
     --primary: #4f7cff;
     --primary-dark: #3b6ae0;
-    --primary-light: #e8efff;
     --text: #1e293b;
     --text-light: #64748b;
     --border: #e2e8f0;
@@ -19,6 +18,7 @@
     --danger: #ef4444;
     --warning: #fbbf24;
     --gold: #f59e0b;
+    --purple: #8b5cf6;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -32,7 +32,6 @@
     padding: 12px;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
-    overflow-x: hidden;
   }
   .app {
     width: 100%;
@@ -44,13 +43,13 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    position: relative;
   }
   .top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
   }
   .level-pill {
     background: linear-gradient(135deg, var(--primary), #6b8eff);
@@ -59,34 +58,31 @@
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 700;
-    letter-spacing: 0.3px;
     white-space: nowrap;
   }
-  .stats {
-    display: flex;
-    gap: 12px;
-    font-size: 0.75rem;
-    color: var(--text-light);
-    font-weight: 600;
-  }
-  .stats span b { color: var(--text); font-size: 0.85rem; }
   .difficulty-badge {
     padding: 4px 10px;
     border-radius: 12px;
     font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 0.5px;
     text-transform: uppercase;
   }
   .diff-easy { background: #d1fae5; color: #065f46; }
   .diff-medium { background: #fef3c7; color: #92400e; }
   .diff-hard { background: #fee2e2; color: #991b1b; }
   .diff-expert { background: #ede9fe; color: #5b21b6; }
+  .diff-master { background: #fce7f3; color: #9f1239; }
 
-  .board-wrap {
+  .stats-row {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    font-weight: 600;
+    padding: 0 4px;
   }
+  .stats-row b { color: var(--text); }
+
   .board {
     display: grid;
     gap: 5px;
@@ -95,7 +91,6 @@
     background: #f1f5f9;
     border-radius: 16px;
     padding: 8px;
-    transition: background 0.3s;
   }
   .cell {
     background: var(--surface);
@@ -108,14 +103,8 @@
     cursor: pointer;
     transition: transform 0.12s, background 0.15s, box-shadow 0.15s;
     color: var(--text);
-    position: relative;
-    overflow: hidden;
   }
-  .cell.empty {
-    background: transparent;
-    cursor: default;
-    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.03);
-  }
+  .cell.empty { background: transparent; cursor: default; }
   .cell.arrow {
     background: linear-gradient(145deg, #dbeafe, #bfdbfe);
     color: #1e40af;
@@ -143,9 +132,11 @@
   .controls {
     display: flex;
     gap: 6px;
+    flex-wrap: wrap;
   }
   button {
     flex: 1;
+    min-width: 70px;
     padding: 11px 6px;
     border: none;
     border-radius: 12px;
@@ -160,7 +151,7 @@
   .btn-hint { background: #fef3c7; color: #92400e; }
   .btn-undo { background: #e0e7ff; color: #3730a3; }
   .btn-reset { background: #f1f5f9; color: #334155; }
-  .btn-skip { background: #fce7f3; color: #9f1239; }
+  .btn-quiz { background: linear-gradient(135deg, #c4b5fd, #a78bfa); color: #fff; }
 
   .modal-overlay {
     position: fixed;
@@ -180,17 +171,19 @@
   .modal {
     background: #fff;
     border-radius: 22px;
-    padding: 26px 22px;
-    max-width: 340px;
+    padding: 24px 20px;
+    max-width: 360px;
     width: 100%;
     text-align: center;
     box-shadow: 0 24px 48px rgba(0,0,0,0.18);
     transform: scale(0.9);
     transition: transform 0.25s;
+    max-height: 90vh;
+    overflow-y: auto;
   }
   .modal-overlay.show .modal { transform: scale(1); }
-  .modal h2 { font-size: 1.3rem; margin-bottom: 6px; }
-  .modal p { color: var(--text-light); font-size: 0.85rem; margin-bottom: 16px; line-height: 1.5; }
+  .modal h2 { font-size: 1.25rem; margin-bottom: 6px; }
+  .modal p { color: var(--text-light); font-size: 0.85rem; margin-bottom: 14px; line-height: 1.5; }
   .modal .stars { font-size: 2rem; letter-spacing: 6px; margin-bottom: 8px; }
   .modal .xp-gain {
     font-size: 1.1rem;
@@ -209,17 +202,17 @@
   .modal .stat-row b { color: var(--text); }
   .modal button {
     width: 100%;
-    padding: 13px;
+    padding: 12px;
     background: var(--primary);
     color: #fff;
-    font-size: 0.95rem;
-    margin-top: 14px;
+    font-size: 0.9rem;
+    margin-top: 10px;
   }
   .modal button:active { background: var(--primary-dark); }
   .modal .btn-secondary {
     background: #f1f5f9;
     color: var(--text);
-    margin-top: 8px;
+    margin-top: 6px;
   }
   .welcome-modal ul {
     text-align: left;
@@ -230,6 +223,65 @@
     line-height: 1.7;
   }
   .welcome-modal li { margin-bottom: 4px; }
+
+  /* ===== Quiz Styles ===== */
+  .quiz-question {
+    text-align: left;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 12px 0 16px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .quiz-option {
+    text-align: left;
+    padding: 12px 14px;
+    background: #f8fafc;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    font-weight: 500;
+  }
+  .quiz-option:hover { background: #f1f5f9; }
+  .quiz-option.correct {
+    background: #d1fae5;
+    border-color: var(--success);
+    color: #065f46;
+    font-weight: 700;
+  }
+  .quiz-option.wrong {
+    background: #fee2e2;
+    border-color: var(--danger);
+    color: #991b1b;
+    font-weight: 700;
+  }
+  .quiz-option:disabled { cursor: default; }
+  .quiz-explanation {
+    margin-top: 14px;
+    padding: 12px;
+    background: #eff6ff;
+    border-left: 4px solid var(--primary);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    text-align: left;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .quiz-progress {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -239,22 +291,18 @@
   <div class="top-bar">
     <div class="level-pill">Level <span id="levelNum">1</span></div>
     <span class="difficulty-badge diff-easy" id="diffBadge">Easy</span>
-    <div class="stats">
+    <div class="stats-row" style="padding:0;">
       <span>⭐ <b id="totalStars">0</b></span>
       <span>XP <b id="totalXp">0</b></span>
     </div>
   </div>
 
-  <div class="top-bar">
-    <div class="stats">
-      <span>Moves: <b id="moveCount">0</b></span>
-      <span>Best: <b id="bestMoves">-</b></span>
-    </div>
+  <div class="stats-row">
+    <span>Moves: <b id="moveCount">0</b></span>
+    <span>Best: <b id="bestMoves">-</b></span>
   </div>
 
-  <div class="board-wrap">
-    <div class="board" id="board"></div>
-  </div>
+  <div class="board" id="board"></div>
 
   <div class="status-msg" id="statusMsg"></div>
 
@@ -262,7 +310,7 @@
     <button class="btn-hint" id="btnHint">💡 Hint</button>
     <button class="btn-undo" id="btnUndo">↶ Undo</button>
     <button class="btn-reset" id="btnReset">⟲ Reset</button>
-    <button class="btn-skip" id="btnSkip">⏭ Skip</button>
+    <button class="btn-quiz" id="btnQuiz">🔬 Quiz</button>
   </div>
 </div>
 
@@ -278,35 +326,694 @@
   </div>
 </div>
 
+<!-- Quiz Modal -->
+<div class="modal-overlay" id="quizOverlay">
+  <div class="modal">
+    <div class="quiz-progress" id="quizProgress">प्रश्न 1 / 5</div>
+    <h2 id="quizTopic" style="font-size:0.85rem;color:var(--purple);text-transform:uppercase;letter-spacing:0.5px;">भौतिकी</h2>
+    <div class="quiz-question" id="quizQuestion">प्रश्न लोड हो रहा है...</div>
+    <div class="quiz-options" id="quizOptions"></div>
+    <div class="quiz-explanation hidden" id="quizExplanation"></div>
+    <button id="quizNextBtn" class="hidden" style="margin-top:14px;">अगला →</button>
+    <button class="btn-secondary" id="quizCloseBtn" style="margin-top:6px;">बंद करें</button>
+  </div>
+</div>
+
 <!-- Welcome Modal -->
 <div class="modal-overlay show" id="welcomeOverlay">
   <div class="modal welcome-modal">
-    <h2>🏹 Arrow Puzzle</h2>
-    <p>असीमित लेवल, हर बार नया!</p>
+    <h2>🏹 Arrow Puzzle + Quiz</h2>
+    <p>30 levels + असीमित चुनौती!</p>
     <ul>
-      <li>Arrow पर टैप करो</li>
-      <li>अगर रास्ता साफ़ है तो वह बाहर निकल जाएगा</li>
-      <li>अगर रास्ता बंद है, तो वह हिलेगा</li>
-      <li>सही क्रम में arrows निकालकर सभी हटाओ</li>
+      <li>Arrow पर टैप करके बाहर निकालो</li>
+      <li>रास्ता साफ़ हो तभी arrow निकलेगा</li>
       <li>कम moves में 3 stars पाओ</li>
-      <li>XP कमाओ और अपना रिकॉर्ड तोड़ो!</li>
+      <li>Level 30 के बाद असीमित लेवल खुलेंगे</li>
+      <li>🔬 Quiz बटन से भौतिकी के सवाल हल करो</li>
     </ul>
     <button id="btnStart">Start Playing</button>
   </div>
 </div>
 
 <script>
-// ===== सेव डेटा =====
-const SAVE_KEY = 'arrowPuzzleUnlimitedSave';
+// ============================================================
+// ==================== PHYSICS QUIZ DATA =====================
+// ============================================================
+const QUIZ_DATA = [
+  {
+    topic: "प्रकाश का परावर्तन",
+    question: "समतल दर्पण में बना प्रतिबिम्ब कैसा होता है?",
+    options: ["वास्तविक और उल्टा", "आभासी और सीधा", "वास्तविक और सीधा", "आभासी और उल्टा"],
+    answer: 1,
+    explanation: "समतल दर्पण सदैव आभासी, सीधा और समान आकार का प्रतिबिम्ब बनाता है।"
+  },
+  {
+    topic: "दर्पण सूत्र",
+    question: "दर्पण सूत्र क्या है?",
+    options: ["1/v + 1/u = 1/f", "1/v - 1/u = 1/f", "v + u = f", "1/u - 1/v = 1/f"],
+    answer: 0,
+    explanation: "दर्पण सूत्र 1/v + 1/u = 1/f है, जहाँ v = प्रतिबिम्ब दूरी, u = वस्तु दूरी, f = फोकस दूरी।"
+  },
+  {
+    topic: "अपवर्तन",
+    question: "स्नेल का नियम किससे संबंधित है?",
+    options: ["परावर्तन", "अपवर्तन", "विवर्तन", "प्रकीर्णन"],
+    answer: 1,
+    explanation: "स्नेल का नियम अपवर्तन से संबंधित है: sin i / sin r = n (अपवर्तनांक)।"
+  },
+  {
+    topic: "लेंस",
+    question: "लेंस की क्षमता का SI मात्रक क्या है?",
+    options: ["मीटर", "डायोप्टर", "न्यूटन", "सेकंड"],
+    answer: 1,
+    explanation: "लेंस की क्षमता का SI मात्रक डायोप्टर (D) है। 1 D = 1 m⁻¹।"
+  },
+  {
+    topic: "मानव नेत्र",
+    question: "निकट दृष्टि दोष (Myopia) में किस लेंस का उपयोग करते हैं?",
+    options: ["उत्तल लेंस", "अवतल लेंस", "बेलनाकार लेंस", "समतल लेंस"],
+    answer: 1,
+    explanation: "निकट दृष्टि दोष में अवतल लेंस का उपयोग होता है। यह दूर की वस्तुओं को स्पष्ट देखने में मदद करता है।"
+  }
+];
+
+// ============================================================
+// ==================== FIXED LEVELS 1-30 =====================
+// ============================================================
+const FIXED_LEVELS = [
+  // Level 1-5: Easy (4x4)
+  { size:4, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:3,col:3,dir:'down'}
+  ]},
+  { size:4, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:3,col:0,dir:'up'},
+    {id:3,row:3,col:3,dir:'left'}
+  ]},
+  { size:4, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:3,dir:'down'},
+    {id:3,row:3,col:3,dir:'left'},
+    {id:4,row:1,col:1,dir:'down'}
+  ]},
+  { size:4, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:3,dir:'down'},
+    {id:3,row:3,col:3,dir:'left'},
+    {id:4,row:3,col:0,dir:'up'},
+    {id:5,row:1,col:1,dir:'right'}
+  ]},
+  { size:4, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:3,dir:'down'},
+    {id:3,row:3,col:3,dir:'left'},
+    {id:4,row:3,col:0,dir:'up'},
+    {id:5,row:1,col:2,dir:'right'},
+    {id:6,row:2,col:1,dir:'down'}
+  ]},
+  // Level 6-12: Medium (5x5)
+  { size:5, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:4,dir:'down'},
+    {id:3,row:4,col:4,dir:'left'},
+    {id:4,row:4,col:0,dir:'up'},
+    {id:5,row:2,col:2,dir:'right'},
+    {id:6,row:1,col:3,dir:'down'}
+  ]},
+  { size:5, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:4,dir:'down'},
+    {id:3,row:4,col:4,dir:'left'},
+    {id:4,row:2,col:1,dir:'right'},
+    {id:5,row:4,col:0,dir:'up'},
+    {id:6,row:3,col:3,dir:'left'},
+    {id:7,row:1,col:4,dir:'down'}
+  ]},
+  { size:5, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:4,dir:'down'},
+    {id:3,row:4,col:4,dir:'left'},
+    {id:4,row:2,col:1,dir:'right'},
+    {id:5,row:4,col:0,dir:'up'},
+    {id:6,row:3,col:3,dir:'left'},
+    {id:7,row:1,col:4,dir:'down'},
+    {id:8,row:2,col:3,dir:'right'}
+  ]},
+  { size:5, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:4,dir:'down'},
+    {id:3,row:4,col:4,dir:'left'},
+    {id:4,row:2,col:2,dir:'right'},
+    {id:5,row:3,col:2,dir:'up'},
+    {id:6,row:4,col:0,dir:'up'},
+    {id:7,row:1,col:3,dir:'down'},
+    {id:8,row:3,col:4,dir:'left'},
+    {id:9,row:2,col:4,dir:'down'}
+  ]},
+  { size:5, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:4,dir:'down'},
+    {id:3,row:4,col:4,dir:'left'},
+    {id:4,row:2,col:2,dir:'right'},
+    {id:5,row:3,col:2,dir:'up'},
+    {id:6,row:4,col:0,dir:'up'},
+    {id:7,row:1,col:3,dir:'down'},
+    {id:8,row:3,col:4,dir:'left'},
+    {id:9,row:2,col:4,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'}
+  ]},
+  { size:5, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:4,dir:'down'},
+    {id:3,row:4,col:4,dir:'left'},
+    {id:4,row:2,col:2,dir:'right'},
+    {id:5,row:3,col:2,dir:'up'},
+    {id:6,row:4,col:0,dir:'up'},
+    {id:7,row:1,col:3,dir:'down'},
+    {id:8,row:3,col:4,dir:'left'},
+    {id:9,row:2,col:4,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:4,col:2,dir:'up'}
+  ]},
+  { size:5, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:4,dir:'down'},
+    {id:3,row:4,col:4,dir:'left'},
+    {id:4,row:2,col:2,dir:'right'},
+    {id:5,row:3,col:2,dir:'up'},
+    {id:6,row:4,col:0,dir:'up'},
+    {id:7,row:1,col:3,dir:'down'},
+    {id:8,row:3,col:4,dir:'left'},
+    {id:9,row:2,col:4,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:4,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'}
+  ]},
+  // Level 13-20: Hard (6x6)
+  { size:6, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:5,dir:'down'},
+    {id:3,row:5,col:5,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:5,col:0,dir:'up'},
+    {id:7,row:1,col:4,dir:'down'},
+    {id:8,row:4,col:5,dir:'left'},
+    {id:9,row:2,col:5,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:5,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'}
+  ]},
+  { size:6, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:5,dir:'down'},
+    {id:3,row:5,col:5,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:5,col:0,dir:'up'},
+    {id:7,row:1,col:4,dir:'down'},
+    {id:8,row:4,col:5,dir:'left'},
+    {id:9,row:2,col:5,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:5,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:4,col:1,dir:'right'}
+  ]},
+  { size:6, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:5,dir:'down'},
+    {id:3,row:5,col:5,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:5,col:0,dir:'up'},
+    {id:7,row:1,col:4,dir:'down'},
+    {id:8,row:4,col:5,dir:'left'},
+    {id:9,row:2,col:5,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:5,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:4,col:1,dir:'right'},
+    {id:15,row:2,col:4,dir:'down'}
+  ]},
+  { size:6, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:5,dir:'down'},
+    {id:3,row:5,col:5,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:5,col:0,dir:'up'},
+    {id:7,row:1,col:4,dir:'down'},
+    {id:8,row:4,col:5,dir:'left'},
+    {id:9,row:2,col:5,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:5,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:4,col:1,dir:'right'},
+    {id:15,row:2,col:4,dir:'down'},
+    {id:16,row:3,col:5,dir:'left'}
+  ]},
+  { size:6, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:5,dir:'down'},
+    {id:3,row:5,col:5,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:5,col:0,dir:'up'},
+    {id:7,row:1,col:4,dir:'down'},
+    {id:8,row:4,col:5,dir:'left'},
+    {id:9,row:2,col:5,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:5,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:4,col:1,dir:'right'},
+    {id:15,row:2,col:4,dir:'down'},
+    {id:16,row:3,col:5,dir:'left'},
+    {id:17,row:1,col:3,dir:'down'}
+  ]},
+  { size:6, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:5,dir:'down'},
+    {id:3,row:5,col:5,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:5,col:0,dir:'up'},
+    {id:7,row:1,col:4,dir:'down'},
+    {id:8,row:4,col:5,dir:'left'},
+    {id:9,row:2,col:5,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:5,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:4,col:1,dir:'right'},
+    {id:15,row:2,col:4,dir:'down'},
+    {id:16,row:3,col:5,dir:'left'},
+    {id:17,row:1,col:3,dir:'down'},
+    {id:18,row:0,col:3,dir:'down'}
+  ]},
+  { size:6, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:5,dir:'down'},
+    {id:3,row:5,col:5,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:5,col:0,dir:'up'},
+    {id:7,row:1,col:4,dir:'down'},
+    {id:8,row:4,col:5,dir:'left'},
+    {id:9,row:2,col:5,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:5,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:4,col:1,dir:'right'},
+    {id:15,row:2,col:4,dir:'down'},
+    {id:16,row:3,col:5,dir:'left'},
+    {id:17,row:1,col:3,dir:'down'},
+    {id:18,row:0,col:3,dir:'down'},
+    {id:19,row:4,col:2,dir:'up'}
+  ]},
+  { size:6, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:5,dir:'down'},
+    {id:3,row:5,col:5,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:5,col:0,dir:'up'},
+    {id:7,row:1,col:4,dir:'down'},
+    {id:8,row:4,col:5,dir:'left'},
+    {id:9,row:2,col:5,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:5,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:4,col:1,dir:'right'},
+    {id:15,row:2,col:4,dir:'down'},
+    {id:16,row:3,col:5,dir:'left'},
+    {id:17,row:1,col:3,dir:'down'},
+    {id:18,row:0,col:3,dir:'down'},
+    {id:19,row:4,col:2,dir:'up'},
+    {id:20,row:2,col:0,dir:'right'}
+  ]},
+  // Level 21-30: Expert (7x7)
+  { size:7, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:6,dir:'down'},
+    {id:3,row:6,col:6,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:6,col:0,dir:'up'},
+    {id:7,row:1,col:5,dir:'down'},
+    {id:8,row:5,col:6,dir:'left'},
+    {id:9,row:2,col:6,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:6,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:5,col:1,dir:'right'},
+    {id:15,row:2,col:5,dir:'down'},
+    {id:16,row:4,col:6,dir:'left'},
+    {id:17,row:1,col:4,dir:'down'},
+    {id:18,row:0,col:4,dir:'down'},
+    {id:19,row:5,col:2,dir:'up'},
+    {id:20,row:2,col:0,dir:'right'},
+    {id:21,row:3,col:6,dir:'left'}
+  ]},
+  { size:7, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:6,dir:'down'},
+    {id:3,row:6,col:6,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:6,col:0,dir:'up'},
+    {id:7,row:1,col:5,dir:'down'},
+    {id:8,row:5,col:6,dir:'left'},
+    {id:9,row:2,col:6,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:6,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:5,col:1,dir:'right'},
+    {id:15,row:2,col:5,dir:'down'},
+    {id:16,row:4,col:6,dir:'left'},
+    {id:17,row:1,col:4,dir:'down'},
+    {id:18,row:0,col:4,dir:'down'},
+    {id:19,row:5,col:2,dir:'up'},
+    {id:20,row:2,col:0,dir:'right'},
+    {id:21,row:3,col:6,dir:'left'},
+    {id:22,row:4,col:1,dir:'right'}
+  ]},
+  { size:7, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:6,dir:'down'},
+    {id:3,row:6,col:6,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:6,col:0,dir:'up'},
+    {id:7,row:1,col:5,dir:'down'},
+    {id:8,row:5,col:6,dir:'left'},
+    {id:9,row:2,col:6,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:6,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:5,col:1,dir:'right'},
+    {id:15,row:2,col:5,dir:'down'},
+    {id:16,row:4,col:6,dir:'left'},
+    {id:17,row:1,col:4,dir:'down'},
+    {id:18,row:0,col:4,dir:'down'},
+    {id:19,row:5,col:2,dir:'up'},
+    {id:20,row:2,col:0,dir:'right'},
+    {id:21,row:3,col:6,dir:'left'},
+    {id:22,row:4,col:1,dir:'right'},
+    {id:23,row:0,col:2,dir:'right'}
+  ]},
+  { size:7, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:6,dir:'down'},
+    {id:3,row:6,col:6,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:6,col:0,dir:'up'},
+    {id:7,row:1,col:5,dir:'down'},
+    {id:8,row:5,col:6,dir:'left'},
+    {id:9,row:2,col:6,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:6,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:5,col:1,dir:'right'},
+    {id:15,row:2,col:5,dir:'down'},
+    {id:16,row:4,col:6,dir:'left'},
+    {id:17,row:1,col:4,dir:'down'},
+    {id:18,row:0,col:4,dir:'down'},
+    {id:19,row:5,col:2,dir:'up'},
+    {id:20,row:2,col:0,dir:'right'},
+    {id:21,row:3,col:6,dir:'left'},
+    {id:22,row:4,col:1,dir:'right'},
+    {id:23,row:0,col:2,dir:'right'},
+    {id:24,row:5,col:4,dir:'up'}
+  ]},
+  { size:7, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:6,dir:'down'},
+    {id:3,row:6,col:6,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:6,col:0,dir:'up'},
+    {id:7,row:1,col:5,dir:'down'},
+    {id:8,row:5,col:6,dir:'left'},
+    {id:9,row:2,col:6,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:6,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:5,col:1,dir:'right'},
+    {id:15,row:2,col:5,dir:'down'},
+    {id:16,row:4,col:6,dir:'left'},
+    {id:17,row:1,col:4,dir:'down'},
+    {id:18,row:0,col:4,dir:'down'},
+    {id:19,row:5,col:2,dir:'up'},
+    {id:20,row:2,col:0,dir:'right'},
+    {id:21,row:3,col:6,dir:'left'},
+    {id:22,row:4,col:1,dir:'right'},
+    {id:23,row:0,col:2,dir:'right'},
+    {id:24,row:5,col:4,dir:'up'},
+    {id:25,row:4,col:4,dir:'up'}
+  ]},
+  { size:7, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:6,dir:'down'},
+    {id:3,row:6,col:6,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:6,col:0,dir:'up'},
+    {id:7,row:1,col:5,dir:'down'},
+    {id:8,row:5,col:6,dir:'left'},
+    {id:9,row:2,col:6,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:6,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:5,col:1,dir:'right'},
+    {id:15,row:2,col:5,dir:'down'},
+    {id:16,row:4,col:6,dir:'left'},
+    {id:17,row:1,col:4,dir:'down'},
+    {id:18,row:0,col:4,dir:'down'},
+    {id:19,row:5,col:2,dir:'up'},
+    {id:20,row:2,col:0,dir:'right'},
+    {id:21,row:3,col:6,dir:'left'},
+    {id:22,row:4,col:1,dir:'right'},
+    {id:23,row:0,col:2,dir:'right'},
+    {id:24,row:5,col:4,dir:'up'},
+    {id:25,row:4,col:4,dir:'up'},
+    {id:26,row:1,col:3,dir:'down'}
+  ]},
+  { size:7, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:6,dir:'down'},
+    {id:3,row:6,col:6,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:6,col:0,dir:'up'},
+    {id:7,row:1,col:5,dir:'down'},
+    {id:8,row:5,col:6,dir:'left'},
+    {id:9,row:2,col:6,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:6,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:5,col:1,dir:'right'},
+    {id:15,row:2,col:5,dir:'down'},
+    {id:16,row:4,col:6,dir:'left'},
+    {id:17,row:1,col:4,dir:'down'},
+    {id:18,row:0,col:4,dir:'down'},
+    {id:19,row:5,col:2,dir:'up'},
+    {id:20,row:2,col:0,dir:'right'},
+    {id:21,row:3,col:6,dir:'left'},
+    {id:22,row:4,col:1,dir:'right'},
+    {id:23,row:0,col:2,dir:'right'},
+    {id:24,row:5,col:4,dir:'up'},
+    {id:25,row:4,col:4,dir:'up'},
+    {id:26,row:1,col:3,dir:'down'},
+    {id:27,row:6,col:4,dir:'up'}
+  ]},
+  { size:7, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:6,dir:'down'},
+    {id:3,row:6,col:6,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:6,col:0,dir:'up'},
+    {id:7,row:1,col:5,dir:'down'},
+    {id:8,row:5,col:6,dir:'left'},
+    {id:9,row:2,col:6,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:6,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:5,col:1,dir:'right'},
+    {id:15,row:2,col:5,dir:'down'},
+    {id:16,row:4,col:6,dir:'left'},
+    {id:17,row:1,col:4,dir:'down'},
+    {id:18,row:0,col:4,dir:'down'},
+    {id:19,row:5,col:2,dir:'up'},
+    {id:20,row:2,col:0,dir:'right'},
+    {id:21,row:3,col:6,dir:'left'},
+    {id:22,row:4,col:1,dir:'right'},
+    {id:23,row:0,col:2,dir:'right'},
+    {id:24,row:5,col:4,dir:'up'},
+    {id:25,row:4,col:4,dir:'up'},
+    {id:26,row:1,col:3,dir:'down'},
+    {id:27,row:6,col:4,dir:'up'},
+    {id:28,row:2,col:3,dir:'right'}
+  ]},
+  { size:7, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:6,dir:'down'},
+    {id:3,row:6,col:6,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:6,col:0,dir:'up'},
+    {id:7,row:1,col:5,dir:'down'},
+    {id:8,row:5,col:6,dir:'left'},
+    {id:9,row:2,col:6,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:6,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:5,col:1,dir:'right'},
+    {id:15,row:2,col:5,dir:'down'},
+    {id:16,row:4,col:6,dir:'left'},
+    {id:17,row:1,col:4,dir:'down'},
+    {id:18,row:0,col:4,dir:'down'},
+    {id:19,row:5,col:2,dir:'up'},
+    {id:20,row:2,col:0,dir:'right'},
+    {id:21,row:3,col:6,dir:'left'},
+    {id:22,row:4,col:1,dir:'right'},
+    {id:23,row:0,col:2,dir:'right'},
+    {id:24,row:5,col:4,dir:'up'},
+    {id:25,row:4,col:4,dir:'up'},
+    {id:26,row:1,col:3,dir:'down'},
+    {id:27,row:6,col:4,dir:'up'},
+    {id:28,row:2,col:3,dir:'right'},
+    {id:29,row:0,col:3,dir:'down'}
+  ]},
+  { size:7, arrows:[
+    {id:1,row:0,col:0,dir:'right'},
+    {id:2,row:0,col:6,dir:'down'},
+    {id:3,row:6,col:6,dir:'left'},
+    {id:4,row:3,col:3,dir:'right'},
+    {id:5,row:4,col:3,dir:'up'},
+    {id:6,row:6,col:0,dir:'up'},
+    {id:7,row:1,col:5,dir:'down'},
+    {id:8,row:5,col:6,dir:'left'},
+    {id:9,row:2,col:6,dir:'down'},
+    {id:10,row:1,col:1,dir:'right'},
+    {id:11,row:6,col:2,dir:'up'},
+    {id:12,row:3,col:0,dir:'right'},
+    {id:13,row:2,col:2,dir:'right'},
+    {id:14,row:5,col:1,dir:'right'},
+    {id:15,row:2,col:5,dir:'down'},
+    {id:16,row:4,col:6,dir:'left'},
+    {id:17,row:1,col:4,dir:'down'},
+    {id:18,row:0,col:4,dir:'down'},
+    {id:19,row:5,col:2,dir:'up'},
+    {id:20,row:2,col:0,dir:'right'},
+    {id:21,row:3,col:6,dir:'left'},
+    {id:22,row:4,col:1,dir:'right'},
+    {id:23,row:0,col:2,dir:'right'},
+    {id:24,row:5,col:4,dir:'up'},
+    {id:25,row:4,col:4,dir:'up'},
+    {id:26,row:1,col:3,dir:'down'},
+    {id:27,row:6,col:4,dir:'up'},
+    {id:28,row:2,col:3,dir:'right'},
+    {id:29,row:0,col:3,dir:'down'},
+    {id:30,row:4,col:5,dir:'left'}
+  ]}
+];
+
+// ============================================================
+// ================== UNLIMITED (31+) GENERATOR ===============
+// ============================================================
+function getDifficulty(level) {
+  if (level <= 5)  return { name:'Easy',    cls:'diff-easy',   size:4, min:3,  max:5  };
+  if (level <= 12) return { name:'Medium',  cls:'diff-medium', size:5, min:6,  max:9  };
+  if (level <= 20) return { name:'Hard',    cls:'diff-hard',   size:6, min:10, max:14 };
+  if (level <= 30) return { name:'Expert',  cls:'diff-expert', size:7, min:15, max:20 };
+  if (level <= 45) return { name:'Expert+', cls:'diff-expert', size:8, min:21, max:28 };
+  if (level <= 60) return { name:'Master',  cls:'diff-master', size:9, min:29, max:38 };
+  if (level <= 80) return { name:'Master+', cls:'diff-master', size:10,min:39, max:50 };
+  return { name:'Legend', cls:'diff-master', size:11, min:51, max:65 };
+}
+
+// Level 31+ के लिए random लेकिन सॉल्वेबल
+function generateUnlimitedLevel(levelNum) {
+  const diff = getDifficulty(levelNum);
+  const size = diff.size;
+  const targetArrows = Math.min(
+    Math.floor(diff.min + Math.random() * (diff.max - diff.min + 1)),
+    Math.floor(size * size * 0.55)
+  );
+  
+  const grid = Array.from({ length: size }, () => Array(size).fill(null));
+  const arrowsList = [];
+  const dirs = ['up', 'down', 'left', 'right'];
+  let attempts = 0;
+  const maxAttempts = 5000;
+  
+  while (arrowsList.length < targetArrows && attempts < maxAttempts) {
+    attempts++;
+    const r = Math.floor(Math.random() * size);
+    const c = Math.floor(Math.random() * size);
+    if (grid[r][c] !== null) continue;
+    
+    const shuffled = dirs.slice().sort(() => Math.random() - 0.5);
+    for (const dir of shuffled) {
+      let clear = true;
+      let rr = r, cc = c;
+      const step = { up:[-1,0], down:[1,0], left:[0,-1], right:[0,1] }[dir];
+      while (true) {
+        rr += step[0]; cc += step[1];
+        if (rr < 0 || rr >= size || cc < 0 || cc >= size) break;
+        if (grid[rr][cc] !== null) { clear = false; break; }
+      }
+      if (!clear) continue;
+      
+      const id = arrowsList.length + 1;
+      grid[r][c] = { id, row: r, col: c, dir };
+      arrowsList.push({ id, row: r, col: c, dir });
+      break;
+    }
+  }
+  
+  // Fallback
+  if (arrowsList.length < 2) {
+    arrowsList.length = 0;
+    grid.forEach(row => row.fill(null));
+    arrowsList.push({ id:1, row:0, col:0, dir:'right' });
+    arrowsList.push({ id:2, row:size-1, col:size-1, dir:'down' });
+  }
+  
+  return { size, arrows: arrowsList };
+}
+
+// ============================================================
+// ======================== SAVE DATA ==========================
+// ============================================================
+const SAVE_KEY = 'arrowPuzzleUnlimitedV2';
 const defaultSave = {
   level: 1,
   totalStars: 0,
   totalXp: 0,
-  bestMoves: {},        // level -> best moves
-  completed: [],
-  soundEnabled: true
+  bestMoves: {},
+  quizAnswered: 0,
+  quizCorrect: 0
 };
-
 function loadSave() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -319,7 +1026,9 @@ function writeSave(data) {
 }
 let SAVE = loadSave();
 
-// ===== गेम स्टेट =====
+// ============================================================
+// ======================== GAME STATE ========================
+// ============================================================
 let currentLevel = SAVE.level || 1;
 let boardSize = 4;
 let arrows = [];
@@ -345,92 +1054,30 @@ const btnNext = document.getElementById('btnNext');
 const btnReplay = document.getElementById('btnReplay');
 const welcomeOverlay = document.getElementById('welcomeOverlay');
 
-// ===== रैंडम =====
-function rand() { return Math.random(); }
-
-// ===== डिफिकल्टी =====
-function getDifficulty(level) {
-  if (level <= 5) return { name: 'Easy', cls: 'diff-easy', min: 3, max: 5, size: 4 };
-  if (level <= 12) return { name: 'Medium', cls: 'diff-medium', min: 6, max: 9, size: 5 };
-  if (level <= 20) return { name: 'Hard', cls: 'diff-hard', min: 10, max: 14, size: 6 };
-  if (level <= 30) return { name: 'Hard+', cls: 'diff-hard', min: 15, max: 19, size: 7 };
-  if (level <= 50) return { name: 'Expert', cls: 'diff-expert', min: 20, max: 26, size: 8 };
-  if (level <= 80) return { name: 'Expert+', cls: 'diff-expert', min: 27, max: 34, size: 9 };
-  return { name: 'Master', cls: 'diff-expert', min: 35, max: 45, size: 10 };
-}
-
-// ===== लेवल जनरेटर (गारंटीड सॉल्वेबल) =====
-function generateLevel(levelNum) {
-  const diff = getDifficulty(levelNum);
-  const size = diff.size;
-  const targetArrows = Math.min(
-    Math.floor(diff.min + rand() * (diff.max - diff.min + 1)),
-    Math.floor(size * size * 0.55)
-  );
-  
-  const grid = Array.from({ length: size }, () => Array(size).fill(null));
-  const arrowsList = [];
-  const dirs = ['up', 'down', 'left', 'right'];
-  
-  // हर arrow के लिए random position और direction चुनें
-  let attempts = 0;
-  const maxAttempts = 3000;
-  
-  while (arrowsList.length < targetArrows && attempts < maxAttempts) {
-    attempts++;
-    const r = Math.floor(rand() * size);
-    const c = Math.floor(rand() * size);
-    if (grid[r][c] !== null) continue;
-    
-    // शफल डायरेक्शन
-    const shuffled = dirs.slice().sort(() => rand() - 0.5);
-    let placed = false;
-    
-    for (const dir of shuffled) {
-      // चेक करें कि इस direction में रास्ता साफ़ है
-      let clear = true;
-      let rr = r, cc = c;
-      const step = { up: [-1,0], down: [1,0], left: [0,-1], right: [0,1] }[dir];
-      while (true) {
-        rr += step[0];
-        cc += step[1];
-        if (rr < 0 || rr >= size || cc < 0 || cc >= size) break;
-        if (grid[rr][cc] !== null) { clear = false; break; }
-      }
-      if (!clear) continue;
-      
-      const id = arrowsList.length + 1;
-      grid[r][c] = { id, row: r, col: c, dir };
-      arrowsList.push({ id, row: r, col: c, dir });
-      placed = true;
-      break;
-    }
-  }
-  
-  // Fallback अगर बहुत कम arrows बने
-  if (arrowsList.length < 2) {
-    arrowsList.length = 0;
-    grid.forEach(row => row.fill(null));
-    const positions = [
-      [0, 0, 'right'],
-      [size - 1, size - 1, 'down']
-    ];
-    positions.forEach((p, i) => {
-      arrowsList.push({ id: i + 1, row: p[0], col: p[1], dir: p[2] });
-      grid[p[0]][p[1]] = arrowsList[i];
-    });
-  }
-  
-  return { size, arrows: arrowsList };
-}
-
-// ===== लेवल लोड =====
+// ============================================================
+// ======================== LOAD LEVEL ========================
+// ============================================================
 function loadLevel(levelNum) {
   currentLevel = levelNum;
   SAVE.level = levelNum;
   writeSave(SAVE);
   
-  const level = generateLevel(levelNum);
+  let level;
+  if (levelNum <= 30) {
+    // Fixed levels
+    const fixed = FIXED_LEVELS[levelNum - 1];
+    if (fixed) {
+      level = {
+        size: fixed.size,
+        arrows: fixed.arrows.map(a => ({ ...a }))
+      };
+    } else {
+      level = generateUnlimitedLevel(levelNum);
+    }
+  } else {
+    level = generateUnlimitedLevel(levelNum);
+  }
+  
   boardSize = level.size;
   arrows = level.arrows.map(a => ({ ...a }));
   optimalMoves = level.arrows.length;
@@ -454,7 +1101,9 @@ function loadLevel(levelNum) {
   renderBoard();
 }
 
-// ===== बोर्ड रेंडर =====
+// ============================================================
+// ======================== RENDER ============================
+// ============================================================
 function renderBoard() {
   boardEl.innerHTML = '';
   boardEl.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
@@ -480,21 +1129,24 @@ function renderBoard() {
   }
 }
 
-// ===== पाथ चेक =====
+// ============================================================
+// ==================== PATH CHECK ============================
+// ============================================================
 function isPathClear(arrow) {
   const { row, col, dir } = arrow;
   const occupied = new Set(arrows.map(a => `${a.row},${a.col}`));
   let r = row, c = col;
-  const step = { up: [-1,0], down: [1,0], left: [0,-1], right: [0,1] }[dir];
+  const step = { up:[-1,0], down:[1,0], left:[0,-1], right:[0,1] }[dir];
   while (true) {
-    r += step[0];
-    c += step[1];
+    r += step[0]; c += step[1];
     if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) return true;
     if (occupied.has(`${r},${c}`)) return false;
   }
 }
 
-// ===== क्लिक =====
+// ============================================================
+// ==================== ON ARROW CLICK ========================
+// ============================================================
 function onArrowClick(id) {
   if (animating) return;
   const arrow = arrows.find(a => a.id === id);
@@ -514,14 +1166,11 @@ function onArrowClick(id) {
   animating = true;
   statusMsg.textContent = '';
   
-  history.push({
-    arrows: arrows.map(a => ({ ...a })),
-    moves
-  });
+  history.push({ arrows: arrows.map(a => ({ ...a })), moves });
   
   const cell = boardEl.querySelector(`[data-id="${id}"]`);
   if (cell) {
-    const step = { up: [0,-120], down: [0,120], left: [-120,0], right: [120,0] }[arrow.dir];
+    const step = { up:[0,-120], down:[0,120], left:[-120,0], right:[120,0] }[arrow.dir];
     cell.style.transform = `translate(${step[0]}%, ${step[1]}%) scale(0.4)`;
     cell.style.opacity = '0';
   }
@@ -532,40 +1181,30 @@ function onArrowClick(id) {
     moveCountEl.textContent = moves;
     animating = false;
     renderBoard();
-    
-    if (arrows.length === 0) {
-      levelComplete();
-    }
+    if (arrows.length === 0) levelComplete();
   }, 350);
 }
 
-// ===== लेवल कम्पलीट =====
+// ============================================================
+// ==================== LEVEL COMPLETE ========================
+// ============================================================
 function levelComplete() {
-  // Stars
   let stars = 1;
   if (moves <= optimalMoves) stars = 3;
   else if (moves <= optimalMoves + 2) stars = 2;
   
-  // XP
   const baseXp = 50;
   const starBonus = stars * 25;
   const moveBonus = Math.max(0, (optimalMoves - moves) * 10);
   const xpGained = baseXp + starBonus + moveBonus;
   
-  // Save
-  if (!SAVE.completed.includes(currentLevel)) {
-    SAVE.completed.push(currentLevel);
-  }
   const prevBest = SAVE.bestMoves[currentLevel];
   const isNewBest = !prevBest || moves < prevBest;
-  if (isNewBest) {
-    SAVE.bestMoves[currentLevel] = moves;
-  }
+  if (isNewBest) SAVE.bestMoves[currentLevel] = moves;
   SAVE.totalStars += stars;
   SAVE.totalXp += xpGained;
   writeSave(SAVE);
   
-  // UI
   modalStars.textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
   modalTitle.textContent = 'Level Complete!';
   modalXp.textContent = `+${xpGained} XP`;
@@ -575,9 +1214,7 @@ function levelComplete() {
     <div class="stat-row"><span>Optimal</span><b>${optimalMoves}</b></div>
     <div class="stat-row"><span>Best</span><b>${SAVE.bestMoves[currentLevel]}</b></div>
   `;
-  if (isNewBest) {
-    statsHtml += `<div class="stat-row"><span>🏆 New Best!</span><b>✓</b></div>`;
-  }
+  if (isNewBest) statsHtml += `<div class="stat-row"><span>🏆 New Best!</span><b>✓</b></div>`;
   modalStats.innerHTML = statsHtml;
   
   btnNext.textContent = 'Next Level →';
@@ -593,7 +1230,9 @@ function levelComplete() {
   modalOverlay.classList.add('show');
 }
 
-// ===== हिंट =====
+// ============================================================
+// ==================== BUTTONS ===============================
+// ============================================================
 document.getElementById('btnHint').addEventListener('click', () => {
   if (animating) return;
   const freeArrows = arrows.filter(a => isPathClear(a));
@@ -606,7 +1245,6 @@ document.getElementById('btnHint').addEventListener('click', () => {
   }
 });
 
-// ===== अनडू =====
 document.getElementById('btnUndo').addEventListener('click', () => {
   if (animating || history.length === 0) return;
   const state = history.pop();
@@ -617,27 +1255,121 @@ document.getElementById('btnUndo').addEventListener('click', () => {
   statusMsg.textContent = '';
 });
 
-// ===== रीसेट =====
 document.getElementById('btnReset').addEventListener('click', () => {
-  if (confirm('इस level को फिर से शुरू करें?')) {
-    loadLevel(currentLevel);
-  }
+  if (confirm('इस level को फिर से शुरू करें?')) loadLevel(currentLevel);
 });
 
-// ===== स्किप =====
-document.getElementById('btnSkip').addEventListener('click', () => {
-  if (confirm('इस level को छोड़कर अगले level पर जाएँ? (कोई stars/XP नहीं मिलेगा)')) {
-    loadLevel(currentLevel + 1);
-  }
-});
+document.getElementById('btnQuiz').addEventListener('click', openQuiz);
 
-// ===== शुरुआत =====
 document.getElementById('btnStart').addEventListener('click', () => {
   welcomeOverlay.classList.remove('show');
   loadLevel(currentLevel);
 });
 
-// गेम शुरू
+// ============================================================
+// ==================== QUIZ LOGIC ============================
+// ============================================================
+let quizQuestions = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+const quizOverlay = document.getElementById('quizOverlay');
+const quizProgress = document.getElementById('quizProgress');
+const quizTopic = document.getElementById('quizTopic');
+const quizQuestion = document.getElementById('quizQuestion');
+const quizOptions = document.getElementById('quizOptions');
+const quizExplanation = document.getElementById('quizExplanation');
+const quizNextBtn = document.getElementById('quizNextBtn');
+const quizCloseBtn = document.getElementById('quizCloseBtn');
+
+function openQuiz() {
+  // Shuffle and pick 5 questions
+  const shuffled = QUIZ_DATA.slice().sort(() => Math.random() - 0.5);
+  quizQuestions = shuffled.slice(0, 5);
+  quizIndex = 0;
+  quizScore = 0;
+  quizOverlay.classList.add('show');
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  if (quizIndex >= quizQuestions.length) {
+    endQuiz();
+    return;
+  }
+  quizAnswered = false;
+  const q = quizQuestions[quizIndex];
+  
+  quizProgress.textContent = `प्रश्न ${quizIndex + 1} / ${quizQuestions.length}`;
+  quizTopic.textContent = q.topic;
+  quizQuestion.textContent = q.question;
+  quizExplanation.classList.add('hidden');
+  quizNextBtn.classList.add('hidden');
+  
+  quizOptions.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+    btn.addEventListener('click', () => selectQuizOption(i, btn));
+    quizOptions.appendChild(btn);
+  });
+}
+
+function selectQuizOption(index, btn) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  const q = quizQuestions[quizIndex];
+  const isCorrect = index === q.answer;
+  
+  const allOpts = quizOptions.querySelectorAll('.quiz-option');
+  allOpts.forEach((o, i) => {
+    o.disabled = true;
+    if (i === q.answer) o.classList.add('correct');
+    if (i === index && !isCorrect) o.classList.add('wrong');
+  });
+  
+  if (isCorrect) {
+    quizScore++;
+    SAVE.quizCorrect++;
+  }
+  SAVE.quizAnswered++;
+  writeSave(SAVE);
+  
+  quizExplanation.textContent = '💡 ' + q.explanation;
+  quizExplanation.classList.remove('hidden');
+  quizNextBtn.classList.remove('hidden');
+}
+
+quizNextBtn.addEventListener('click', () => {
+  quizIndex++;
+  showQuizQuestion();
+});
+
+quizCloseBtn.addEventListener('click', () => {
+  quizOverlay.classList.remove('show');
+});
+
+function endQuiz() {
+  quizQuestion.textContent = '🎉 Quiz Complete!';
+  quizTopic.textContent = 'परिणाम';
+  quizProgress.textContent = '';
+  quizOptions.innerHTML = '';
+  quizExplanation.innerHTML = `
+    आपने ${quizQuestions.length} में से <b>${quizScore}</b> सही किए।<br>
+    <span style="color:var(--gold);font-weight:800;font-size:1.2rem;">+${quizScore * 20} XP</span>
+  `;
+  quizExplanation.classList.remove('hidden');
+  SAVE.totalXp += quizScore * 20;
+  writeSave(SAVE);
+  totalXpEl.textContent = SAVE.totalXp;
+  quizNextBtn.classList.add('hidden');
+}
+
+// ============================================================
+// ==================== START =================================
+// ============================================================
 loadLevel(currentLevel);
 </script>
 </body>
