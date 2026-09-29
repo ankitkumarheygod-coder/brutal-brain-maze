@@ -1,0 +1,15 @@
+:root {
+    --bg-dark: #0f1115;
+    --bg-panel: #1a1d24;
+    --bg-hover: #2a2d35;
+    --primary: #3b82f6;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border: #334155;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+body { background: var(--bg-dark); color: var(--text); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+button { cursor: pointer; border: none; outline: none; background: transparent; color: var(--text); }
+.btn-primary { background: var(--primary); padding: 10px 20px; border-radius: 6px; font-weight: bold; }
+.btn-secondary { background: var(--bg-hover); padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border); width: 100%; }
+input[type="range"] { width: 100%; cursor: pointer; accent-color: var(--primary); }
